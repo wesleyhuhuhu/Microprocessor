@@ -1,0 +1,16 @@
+---
+:id: 131985515
+:submitters:
+- :name: Binghong Li
+  :email: bil004@ucsd.edu
+- :name: Xunhao Yang
+  :email: x5yang@ucsd.edu
+- :name: Brooks(Ruijia) Niu
+  :email: rniu@ucsd.edu
+:created_at: !ruby/object:ActiveSupport::TimeWithZone
+  utc: 2022-09-05 05:38:28.704561000 Z
+  zone: !ruby/object:ActiveSupport::TimeZone
+    name: America/Los_Angeles
+  time: 2022-09-04 22:38:28.704561000 Z
+:status: processed
+:score: 50.0
