@@ -12,7 +12,6 @@ module InstFetch #(parameter T=10)(	  // PC width -- up to 32, if you like
                        BranchAbs,	  // jump conditionally to Target value	   
                        BranchRelEn,	  // jump conditionally to Target + PC
                        ALU_flag,	  // flag from ALU, e.g. Zero, Carry, Overflow, Negative (from ARM)
-							  Done,
   input        [T-1:0] Target,	      // jump ... "how high?"
   output logic [T-1:0] ProgCtr        // the program counter register itself
   );
@@ -27,8 +26,6 @@ module InstFetch #(parameter T=10)(	  // PC width -- up to 32, if you like
 	  ProgCtr <= 0;				       // for first program; want different value for 2nd or 3rd
 	else if(Start)					   // hold while start asserted; commence when released
 	  ProgCtr <= 0;                    //or <= ProgCtr;   holds at starting value
-	else if (Done)
-		ProgCtr <= ProgCtr;
 	else if(BranchAbs && ALU_flag)      // conditional absolute jump
 	  ProgCtr <= Target;			   //   how would you make it conditional and/or relative?
 	else if(BranchRelEn && ALU_flag)   // conditional relative jump

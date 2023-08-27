@@ -54,6 +54,7 @@ module top_level(		   // you will have the same 3 ports
         .BranchAbs    (Jump    ) ,  // jump enable
         .BranchRelEn  (BranchEn) ,  // branch enable
         .ALU_flag	  (!ZeroQ    ) ,  // when not zero, we do the branching (for loop/while loop)
+		  .Done 			 (Ack)			,
         .Target       (PCTarg  ) ,  // "where to?" or "how far?" during a jump or branch
         .ProgCtr      (PgmCtr  )	   // program count = index to instruction memory
     );	
@@ -91,15 +92,15 @@ module top_level(		   // you will have the same 3 ports
     RegFile #(.W(8),.D(3)) RF1 (			  // D(3) makes this 8 elements deep
 		.Clk    				  ,
 		.WriteEn   (RegWrEn)    , 
-		.RaddrA    (3'b000),        //concatenate with 0 to give us 4 bits
-		.RaddrB    (Instruction[4:2]), 
+		.RaddrA    (Instruction[5:3]),        //concatenate with 0 to give us 4 bits
+		.RaddrB    (Instruction[2:0]), 
 		.Waddr     (RegWriteIndex), 	      // mux above
 		.DataIn    (RegWriteValue) , 
 		.DataOutA  (ReadA        ) , 
 		.DataOutB  (ReadB		 ) ,
         .Reset                     ,
         .Immediate                 ,
-        .ImmediateValue   (Instruction[8:1]),
+        .ImmediateValue   (Instruction[3:0]),
         .AccumulatorValue,
         .Reg1Value,
         .Reg2Value,
@@ -111,14 +112,16 @@ module top_level(		   // you will have the same 3 ports
 	);
 
     assign InA = ReadA;						  // connect RF out to ALU in
-	assign InB = ReadB;	          			  // interject switch/mux if needed/desired
+	//assign InB = ReadB;	          			  // interject switch/mux if needed/desired
+	assign ImmediateValue = Instruction[3:0];
+	assign InB = Immediate ? ImmediateValue : ReadB;
     // controlled by Ctrl1 -- must be high for load from data_mem; otherwise usually low
 	assign RegWriteValue = LoadInst? MemReadValue : ALU_out;  // 2:1 switch into reg_file
     ALU ALU1  (
         .InputA  (InA),
         .InputB  (InB), 
         .SC_in   (ParityQ),
-        .OP      (Instruction[7:5]),
+        .OP      (Instruction[8:6]),
         .Out     (ALU_out),                       //regWriteValue),
         .MOV_Dest_acc (Instruction[1]),
         .Zero		      ,                       // status flag; may have others, if desired
@@ -134,7 +137,7 @@ module top_level(		   // you will have the same 3 ports
 	DataMem DM(
 		.DataAddress  (ReadB)    ,  //address in B, read data and write to register address in A (instruction[1] == 0)
 		.WriteEn      (MemWrite), 
-		.DataIn       (MemWriteValue), 
+		.DataIn       (MemWriteValue), //ReadA
 		.DataOut      (MemReadValue)  , 
 		.Clk 		  		     ,
 		.Reset		  (Reset)

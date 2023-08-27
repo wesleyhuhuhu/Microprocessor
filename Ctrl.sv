@@ -19,8 +19,7 @@ module Ctrl (
 //  output logic[2:0]  ALU_inst
   );
 
-/* ***** All numerical values are completely arbitrary and for illustration only *****
-*/
+/* ***** All numerical values are completely arbitrary and for illustration only ******/
 
 // alternative -- case format
 always_comb	begin
@@ -33,31 +32,37 @@ always_comb	begin
    PCTarg    = 'b0;     // branch "where to?"
    Immediate = 'b0;
 
-   if ((Instruction[0] == 'b1) && (!(&Instruction))) begin
+   if ((Instruction[8:6] == 3'b110)) begin	//SET
        Immediate = 'b1;
+		 RegWrEn = 'b1;
    end
-   else if ((Instruction[8] == 'b1) && (!(&Instruction))) begin
-       Branch = Instruction[7]; //Absolute Branching ([7] == 1)
-       BranchEn = !Instruction[7]; //Relative Branching ([7] == 0)
+   else if ((Instruction[8:6] == 3'b101)) begin		//BRANCH
+       Branch = 'b1; //Absolute Branching ([7] == 1)
+       //BranchEn = !Instruction[7]; //Relative Branching ([7] == 0)
        RegWrEn = 'b0;
-       PCTarg = Instruction[6:1];
+       PCTarg = Instruction[5:0];
    end
    else begin
-    case(Instruction[7:5])  // list just the exceptions 
-     3'b000:   begin
-                MemWrEn = 'b1;   // store
+    case(Instruction[8:6])  // list just the exceptions 
+     3'b000:   begin		//LOAD
+                MemWrEn = 'b1;
                 RegWrEn = 'b0;
 			         end
-     3'b001:   begin
-                LoadInst = 'b1;  // load
+     3'b001:   begin		//STORE
+                LoadInst = 'b1;
                end
-     3'b010:   begin end
-     3'b011:   begin end
-     3'b100:   begin end
-     3'b101:   begin
-                RegWrEn = Instruction[1]; //disable regwrite to do LFSR
-               end
-     3'b110:   begin end
+     3'b010:   begin 	//AND
+	  
+						end
+     3'b011:   begin		//XOR
+	 
+						end
+     3'b100:   begin 	//ROL
+	  
+						end
+     3'b111:   begin 	//MOV
+					RegWrEn = 'b1;
+					end
 // no default case needed -- covered before "case"
    endcase
   end
@@ -81,7 +86,7 @@ end
 
 assign TapSel = LoadInst &&	 DatMemAddr=='d62;
 
-assign RegWriteIndex = Instruction[1]? Instruction[4:2] : 3'b000;  // 2:1 switch into reg_file
+assign RegWriteIndex = Instruction[8:6];  // 2:1 switch into reg_file
 
 // jump enable command to program counter / instruction fetch module on right shift command
 // equiv to simply: 

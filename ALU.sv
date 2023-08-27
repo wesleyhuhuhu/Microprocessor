@@ -31,14 +31,16 @@ always_comb begin
   Out = InputA;				                        // don't need NOOP? Out = 8'bx
   SC_out = 1'b0;		 							          // 	 will flag any illegal opcodes
   case(op_mnemonic)
-    ADD : {SC_out,Out} = InputA + InputB;   // unsigned add with carry-in and carry-out
-    LSL : {SC_out,Out} = {InputA[7:0],SC_in};       // shift left, fill in with SC_in, fill SC_out with InputA[7]
+    //ADD : {SC_out,Out} = InputA + InputB;   // unsigned add with carry-in and carry-out
+    //LSL : {SC_out,Out} = {InputA[7:0],SC_in};       // shift left, fill in with SC_in, fill SC_out with InputA[7]
     // for logical left shift, tie SC_in = 0
-    // RSH : {Out,SC_out} = {SC_in, InputA[7:0]};      // shift right
+    //RSH : {Out,SC_out} = {SC_in, InputA[7:0]};      // shift right
+	 //SUB : {SC_out,Out} = InputB + (~InputA) + 1;	// InputB - InputA (Accumulator);
+	 AND : Out = InputA & InputB;                    // bitwise AND
     XOR : Out = InputA ^ InputB;                    // bitwise exclusive OR
-    AND : Out = InputA & InputB;                    // bitwise AND
-    SUB : {SC_out,Out} = InputB + (~InputA) + 1;	// InputB - InputA (Accumulator);
-    MOV : Out = MOV_Dest_acc ? InputA : InputB;  // 
+	 ROL : Out = {InputA[6:0],InputA[7]};						// shift left, fill in with SC_in, fill SC_out with InputA[7:0]
+    //MOV : Out = MOV_Dest_acc ? InputA : InputB;  // 
+	 MOV : Out = InputB;  //MOV will always set output to InputB
   endcase
 end
 

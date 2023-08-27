@@ -8,7 +8,7 @@
 /* parameters are compile time directives 
        this can be an any-width, any-depth reg_file: just override the params!
 */
-module RegFile #(parameter W=8, D=4)(		 // W = data path width (leave at 8); D = address pointer width
+module RegFile #(parameter W=8, D=3)(		 // W = data path width (leave at 8); D = address pointer width
   input                Clk,
                        Reset,	             // note use of Reset port
                        WriteEn,
@@ -56,12 +56,12 @@ always_ff @ (posedge Clk)
 	for(int i=0; i<2**D; i++)
 	  Registers[i] <= 'h0;
 // we can override this universal clear command with desired initialization values
-	Registers[0] <= 'd30;                    // loads 30 (=0x1E) into RegFile address 0
-	Registers[2] <= 'b101;                   // loads 00000101 into RegFile address 2 
+//	Registers[0] <= 'd30;                    // loads 30 (=0x1E) into RegFile address 0
+//	Registers[2] <= 'b101;                   // loads 00000101 into RegFile address 2 
   end
   else if (WriteEn)	                         // works just like data_memory writes
     if (Immediate) begin
-      Registers[3'b000] = ImmediateValue;
+		Registers[3'b111] <= ImmediateValue;
     end
     else begin
       Registers[Waddr] <= DataIn;
