@@ -14,4 +14,12 @@ This microprocessor is a register register architecture, and stores output into 
 * NOT
 * SET
 * MOV
-* BRN ( branches, loops, and functions)
+* BRN (branches, loops, and functions)
+
+Sample instruction:
+    SET  0                          # Load immediate 0 into RF
+    MOV R4, RF
+    SET  1                          # Load immediate 1 into RF
+    MOV R5, RF                     
+    SET  30
+    MOV R6, RF
