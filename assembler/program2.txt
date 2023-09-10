@@ -1,0 +1,237 @@
+    SET  30
+    MOV R4, RF
+    SET  31
+    MOV R5, RF
+    SET  30
+    MOV r6, RF
+
+Loop:
+    LDB R4          # Load data_mem[0] into RF
+    MOV R0, RF
+    LDB R5          # Load data_mem[1] into RF
+    MOV R1, RF
+    SET  0
+    MOV R9, RF
+    
+Calculate:
+    # Calculate s8, s4, s2, s1, s0
+    # s8
+    MOV R8, R1
+    EOR R8          # EOR to get s8
+    LSL RA, 4
+    MOV RE, RA
+
+    # s4
+    SET  0b1111
+    MOV R8, RF
+    LSL R9, 4
+    MOV R8, R1
+    AND R8
+    EOR RB
+    MOV R8, R0
+    AND R8
+    EOR R8
+    MOV R9, RB
+    XOR R8          # XOR to get s4
+    LSL R9, 3
+    MOV R8, RE
+    OR  RA
+    MOV RE, RA
+
+    # s2
+    SET  0b1100
+    MOV R8, RF
+    LSL R8, 4
+    MOV R9, RF
+    OR  R9
+    MOV R8, R1
+    AND R8
+    EOR RB
+    MOV R8, R0
+    AND R8
+    EOR R8
+    MOV R9, RB
+    XOR R8          # XOR to get s2
+    LSL R9, 2
+    MOV R8, RE
+    OR  RA
+    MOV RE, RA
+
+    # s1
+    SET  0b1010
+    MOV R8, RF
+    LSL R8, 4
+    MOV R9, RF
+    OR  R9
+    MOV R8, R1
+    AND R8
+    EOR RB
+    MOV R8, R0
+    AND R8
+    EOR R8
+    MOV R9, RB
+    XOR R8          # XOR to get s1
+    LSL R9, 1
+    MOV R8, RE
+    OR  RA
+    MOV RE, RA
+
+    # s0
+    MOV R8, R1
+    EOR RB
+    MOV R8, R0
+    EOR R8
+    MOV R9, RB
+    XOR R9          # XOR to get s0
+
+    MOV R8, RE
+    OR  RA
+    MOV RE, RA
+    SET  0
+    MOV RC, RF
+    MOV RD, RF
+
+NoErrors:
+    # if s0 == 1, there is 1 error, and branch to fix
+    # if all s == 0, there is no error
+    # otherwise, there are 2 errors
+    SET  1
+    MOV R9, RF
+    MOV R8, RE
+    AND R8
+    SET  0
+    MOV R9, RF
+
+    FLGN
+    BRN   $OneError
+    MOV R8, RE
+
+    FLGN
+    BRN   $TwoErrors
+
+    FLGJ
+    BRN   $Output
+
+OneError:
+
+    # output 1 bit error
+    SET  1
+    MOV R8, RF
+    LSL R9, 6
+    MOV R8, RD
+    OR  R8
+    MOV RD, R8
+    # change the incorrect bit
+    MOV R8, RE
+    LSR R8, 1
+    MOV r7, R8
+    MOV RB, R0
+    SET  8
+    MOV R9, RF
+
+    FLGL
+    BRN   $CorrectBit       # if s < 8, correct the bit
+
+    MOV RB, R1
+    SUB R8
+    
+CorrectBit:
+    MOV R9, R8
+    SET  1
+    MOV R8, RF
+    LSL R9
+    MOV R8, RB
+    XOR RA
+    MOV R8, r7
+    SET  8
+    MOV R9, RF
+
+    FLGL
+    BRN   $CorrectBottom    # if s < 8, reload
+
+    MOV R1, RA      # reload r1
+
+    FLGJ
+    BRN   $Output
+
+CorrectBottom:
+    MOV R0, RA      # reload R0
+
+Output:
+    SET  0b00001000
+    MOV R8, R0
+    MOV R9, RF
+    AND R8
+    LSR R8, 3
+    MOV R9, RC
+    OR  RB
+
+    SET  0b00111000
+    MOV R8, RF
+    LSL R9, 2
+    MOV R8, R0
+    AND R8
+    LSR R8, 4
+    MOV R9, RB
+    OR  RB
+    SET  0b00011110
+    MOV R8, R1
+    MOV R9, RF
+    AND R8
+    LSL R8, 3
+    MOV R9, RB
+    OR  RB
+    MOV RC, RB
+    SET  0b00111000
+    MOV R8, RF
+    LSL R9, 2
+    MOV R8, R1
+    AND R8
+    LSR R8, 5
+    MOV R9, RD
+    OR  RA
+    MOV RD, RA
+
+    FLGJ
+    BRN   $DoneWithMsg
+
+TwoErrors:
+    SET 1
+    MOV R8, RF
+    LSL R9, 7
+    MOV R8, RD
+    OR  R8
+    MOV RD, R8
+
+DoneWithMsg:
+    # Store output into mem[30:59]
+    MOV R9, r6
+    MOV R8, R4
+    SUB R8
+    MOV R2, R8
+    MOV R9, r6
+    MOV R8, R5
+    SUB R8
+    MOV R3, R8
+    MOV RF, RC
+    STB R2      # Store RF into data_mem[30]
+    MOV RF, RD
+    STB R3      # Store RF into data_mem[31]
+
+Iterate:
+    SET  2
+    MOV R9, RF
+    MOV R8, R4
+    ADD RA
+    MOV R4, RA
+    MOV R8, R5
+    ADD RA
+    MOV R5, RA
+    MOV R8, R4
+    SET  60
+    MOV R9, RF
+
+    FLGL    # if R8 < R9 then go back to Loop
+    BRN $Loop
+
+    DONE

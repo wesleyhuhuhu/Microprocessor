@@ -1,0 +1,147 @@
+
+
+    SET  0                          # Load immediate 0 into RF
+    MOV R4, RF                     # 
+    SET  1                          # Load immediate 1 into RF
+    MOV R5, RF                     
+    SET  30
+    MOV R6, RF
+Loop:
+    # load message
+    LDB  R4     # Load data_mem[0] into RF
+    MOV R0, RF
+    LDB  R5     # Load data_mem[1] into RF
+    MOV R1, RF
+
+    # change bit location
+    MOV R8, R0
+    SET  1
+    MOV R9, RF
+    AND R8
+    LSL RB, 3
+    MOV R8, R0
+    SET  14
+    MOV R9, RF
+    AND R8
+    LSL R8, 4
+    MOV R9, RB
+    OR  RA
+    MOV RC, RA
+    MOV R8, R1
+    LSL RA, 5
+    SET  0xf
+    MOV R8, RF
+    LSL R9, 4
+    MOV R8, R0
+    AND  R8
+    LSR R8, 3
+    MOV R9, RA
+    OR  RA
+    MOV RD, RA
+
+    # Calculate p8, p4, p2, p1, p0
+
+    # p8 = ^(b11:b5) 
+    MOV R8, RD
+    EOR R9
+    OR  RA
+    MOV RD, RA
+
+    # p4 = ^(b11:b8,b4,b3,b2)
+    SET  0b1111
+    MOV R8, RF
+    LSL R9, 4
+    MOV R8, RD
+    AND R8
+    EOR RB
+    MOV R8, RC
+    AND R8
+    EOR R8
+    MOV R9, RB
+    XOR R8      # XOR to get p4
+    LSL R9, 4
+    MOV R8, RC
+    OR  RA
+    MOV RC, RA
+
+    # p2 = ^(b11,b10,b7,b6,b4,b3,b1)
+    SET  0b1100
+    MOV R8, RF
+    LSL R8, 4
+    MOV R9, RF
+    OR  R9
+    MOV R8, RD
+    AND R8
+    EOR RB
+    MOV R8, RC
+    AND R8
+    EOR R8
+    MOV R9, RB
+    XOR R8      # XOR to get p2
+    LSL R9, 2
+    MOV R8, RC
+    OR  RA
+    MOV RC, RA
+
+    # p1 = ^(b11,b9,b7,b5,b4,b2,b1)
+    SET  0b1010
+    MOV R8, RF
+    LSL R8, 4
+    MOV R9, RF
+    OR  R9
+    MOV R8, RD
+    AND R8
+    EOR RB
+    MOV R8, RC
+    AND R8
+    EOR R8
+    MOV R9, RB
+    XOR R8      # XOR to get p1
+    LSL R9, 1
+    MOV R8, RC
+    OR  RA
+    MOV RC, RA
+
+    # p0 = ^(b11:1,p8,p4,p2,p1)
+    MOV R8, RD
+    EOR RB
+    MOV R8, RC
+    EOR R8
+    MOV R9, RB
+    XOR R9      # XOR to get p0
+    MOV R8, RC
+    OR  RA
+    MOV RC, RA
+
+    # store back into data_mem[]
+    MOV R8, R4
+    MOV R9, R6
+    ADD RA
+    MOV R2, RA
+    MOV R8, R5
+    ADD RA
+    MOV R3, RA
+    MOV RF, RC
+    STB R2      # Store RF into data_mem[30]
+    MOV RF, RD
+    STB R3      # Store RF intodata_ mem[31]
+    
+Iterate:
+    SET  2
+    MOV R9, RF
+    MOV R8, R4
+    ADD RA
+    MOV R4, RA
+    MOV R8, R5
+    ADD RA
+    MOV R5, RA
+    MOV R8, R4
+    SET  30
+    MOV R9, RF
+    NIL         # noop for branching hazards
+    NIL
+    NIL
+    FLGL        # if R8 < R9 then branch
+    BRN $Loop   # loop for all data_mem[]
+
+    DONE

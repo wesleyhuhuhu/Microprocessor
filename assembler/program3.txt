@@ -1,0 +1,216 @@
+main:
+
+        # Load byte with 5-bit bitstring
+        SET      32              
+        MOV     R4, RF
+        LDB     R4          # loads data_mem[32] into RF
+        MOV     R8, RF      # moves data_mem[32] to R8
+        LSR     R8, 3
+        MOV     R0, R8      # move bitstring to R0
+
+        # Load zeroes into counter registers
+        SET     0
+        MOV     RC, RF
+        MOV     RD, RF
+        MOV     RE, RF
+
+Loop1:
+        SET      0
+        MOV     R1, RF
+
+Loop1Condition:
+        MOV     R9, R1
+        SET      31
+        MOV     R8, RF
+        NIL             # NOOP for branch hazard
+        NIL
+        NIL
+        FLGL            # if R1 > 31, end loop 1
+        BRN     $Loop1Last
+
+Loop1Body:
+
+        SET      0
+        MOV     R4, RF
+        LDB     R1
+        MOV     R2, RF
+
+Loop2:
+        SET      0
+        MOV     R5, RF
+
+Loop2Condition:
+        MOV     R9, R5
+        SET      4
+        MOV     R8, RF
+        NIL             # NOOP for branch hazard
+        NIL
+        NIL
+        FLGE            # if R5 >= 4, end loop 2
+        BRN     $Loop2Last
+
+Loop2Body:
+
+        MOV     R8, R2
+        MOV     R9, R5
+        LSR     R8
+        SET      0b11111
+        MOV     R9, RF
+        AND     R8
+        MOV     R9, R0
+        NIL             # NOOP for branch hazard
+        NIL
+        NIL
+        FLGN            # branch to Loop2Next if can't find
+        BRN     $Loop2Next
+
+        MOV     R8, R4
+        SET      1
+        MOV     R9, RF
+        ADD     RA
+        MOV     R4, RA
+
+Loop2Next:
+
+        MOV     R8, R5
+        SET      1
+        MOV     R9, RF
+        ADD     RA
+        MOV     R5, RA
+        NIL             # NOOP for branch hazard
+        NIL
+        NIL
+        FLGJ
+        BRN     $Loop2Condition
+
+Loop2Last:
+
+        SET      0
+        MOV     R9, RF
+        MOV     R8, R4
+        NIL             # NOOP for branch hazard
+        NIL
+        NIL
+        FLGE
+        BRN     $CheckLast      # check if it's the last msg
+        MOV     R8, RD
+        SET      1
+        MOV     R9, RF
+        ADD     RA
+        MOV     RD, RA
+        MOV     R9, R4
+        MOV     R8, RC
+        ADD     RA
+        MOV     RC, RA
+        MOV     R8, RE
+        ADD     RA
+        MOV     RE, RA
+
+CheckLast:
+
+        MOV     R9, R1
+        SET      31
+        MOV     R8, RF
+        NIL             # NOOP for branch hazard
+        NIL
+        NIL
+        FLGE
+        BRN     $Loop1Next
+        
+Loop3:
+
+        SET      1
+        MOV     R5, RF
+
+        # load mem[R1+1] into RE
+        MOV     R8, R1
+        SET      1
+        MOV     R9, RF
+        ADD     RA
+        MOV     R6, RA
+        LDB      R6
+        MOV     R3, RF          # load data_mem[R1+1] into R3
+
+Loop3Condition:
+        SET      4
+        MOV     R8, RF
+        MOV     R9, R5
+        NIL             # NOOP for branch hazard
+        NIL
+        NIL
+        FLGL
+        BRN     $Loop1Next         # if R5 > 4, end loop 3
+
+Loop3Body:
+        # RB = bits[i] << R5;
+        MOV     R9, R5
+        MOV     R8, R2
+        LSL     RB
+        SET      8
+        MOV     R8, RF
+        MOV     R9, R5
+        SUB     R9
+        MOV     R8, R3
+        LSR     R9
+        MOV     R8, RB
+        OR      R8
+        SET      0x1f
+        MOV     R9, RF
+        AND     R8
+
+        # when there is no match, branch to Loop3Next
+        MOV     R9, R0
+        NIL             # NOOP for branch hazard
+        NIL
+        NIL
+        FLGN
+        BRN     $Loop3Next
+
+        # increment overlap match counter RE
+        MOV     R8, RE
+        SET      1
+        MOV     R9, RF
+        ADD     RA
+        MOV     RE, RA
+
+Loop3Next:
+        SET      1
+        MOV     R9, RF
+        MOV     R8, R5
+        ADD     RA
+        MOV     R5, RA
+        NIL             # NOOP for branch hazard
+        NIL
+        NIL
+        FLGJ
+        BRN     $Loop3Condition
+
+Loop1Next:
+
+        MOV     R8, R1
+        SET      1
+        MOV     R9, RF
+        ADD     R8
+        MOV     R1, R8
+        NIL             # NOOP for branch hazard
+        NIL
+        NIL
+        FLGJ
+        BRN     $Loop1Condition
+
+Loop1Last:
+
+        SET      33              
+        MOV     R6, RF
+        MOV     RF, RC
+        STB     R6
+        SET      34
+        MOV     R6, RF
+        MOV     RF, RD
+        STB     R6              # store RD into mem[34]
+        SET      35
+        MOV     R6, RF
+        MOV     RF, RE
+        STB     R6              # store RE into mem[35]
+
+        DONE
